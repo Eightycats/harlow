@@ -1,0 +1,56 @@
+[
+  {
+    "image": "images/creek-wading.jpg",
+    "title": "Untitled #1",
+    "description": "",
+    "size": "tall"
+  },
+  {
+    "image": "images/painted-hills.jpg",
+    "title": "Untitled #2",
+    "description": "",
+    "size": "tall"
+  },
+  {
+    "image": "images/trailside.jpg",
+    "title": "Untitled #3",
+    "description": "",
+    "size": "tall"
+  },
+  {
+    "image": "images/bound-in-bloom.jpg",
+    "title": "Untitled #4",
+    "description": "",
+    "size": "normal"
+  },
+  {
+    "image": "images/rail-yard.jpg",
+    "title": "Untitled #5",
+    "description": "",
+    "size": "wide"
+  },
+  {
+    "image": "images/mountain-lake.jpg",
+    "title": "Untitled #6",
+    "description": "",
+    "size": "normal"
+  },
+  {
+    "image": "images/hot-spring.jpg",
+    "title": "Untitled #7",
+    "description": "",
+    "size": "normal"
+  },
+  {
+    "image": "images/studio-wall.jpg",
+    "title": "Untitled #8",
+    "description": "",
+    "size": "wide"
+  },
+  {
+    "image": "images/resting-in-grass.jpg",
+    "title": "Nature Bathing",
+    "description": "",
+    "size": "normal"
+  }
+]
