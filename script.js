@@ -61,10 +61,14 @@ function initHeroSlideshow(){
   if (!hero) return;
 
   const images = WORKS.map(w => w.image);
-  let current = 0;
 
   // Create two layers for crossfade
   const bgA = hero.querySelector('.hero-bg');
+
+  // Start after the image already shown in the HTML hero
+  const heroSrc = bgA.getAttribute('src');
+  let current = images.indexOf(heroSrc);
+  if (current === -1) current = 0;
   const bgB = document.createElement('img');
   bgB.className = 'hero-bg hero-bg--b';
   bgB.alt = '';
@@ -77,7 +81,7 @@ function initHeroSlideshow(){
 
   let showingA = true;
 
-  setInterval(() => {
+  function advanceSlide(){
     current = (current + 1) % images.length;
     if (showingA){
       bgB.src = images[current];
@@ -89,7 +93,13 @@ function initHeroSlideshow(){
       bgB.style.opacity = '0';
     }
     showingA = !showingA;
-  }, 4000);
+  }
+
+  // First transition after a short delay, then regular interval
+  setTimeout(() => {
+    advanceSlide();
+    setInterval(advanceSlide, 4000);
+  }, 1500);
 }
 
 // ---------- Gallery ----------
@@ -190,18 +200,20 @@ function createLightbox(){
     if (e.key === 'ArrowRight') navigateLightbox(1);
   });
 
-  // Touch swipe support
+  // Touch swipe support (horizontal and vertical)
   let touchStartX = 0;
   let touchStartY = 0;
   let touchDeltaX = 0;
-  let isSwiping = false;
+  let touchDeltaY = 0;
+  let swipeDirection = null; // 'horizontal', 'vertical', or null
 
   lightboxEl.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchDeltaX = 0;
-    isSwiping = false;
+    touchDeltaY = 0;
+    swipeDirection = null;
   }, { passive: true });
 
   lightboxEl.addEventListener('touchmove', (e) => {
@@ -209,22 +221,26 @@ function createLightbox(){
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
 
-    // Once we determine direction, lock it in
-    if (!isSwiping && (Math.abs(dx) > 10 || Math.abs(dy) > 10)){
-      isSwiping = Math.abs(dx) > Math.abs(dy);
+    // Lock in direction on first significant movement
+    if (!swipeDirection && (Math.abs(dx) > 10 || Math.abs(dy) > 10)){
+      swipeDirection = Math.abs(dx) >= Math.abs(dy) ? 'horizontal' : 'vertical';
     }
-    if (isSwiping){
+    if (swipeDirection){
       e.preventDefault();
       touchDeltaX = dx;
+      touchDeltaY = dy;
     }
   }, { passive: false });
 
   lightboxEl.addEventListener('touchend', () => {
-    if (isSwiping && Math.abs(touchDeltaX) > 40){
+    if (swipeDirection === 'horizontal' && Math.abs(touchDeltaX) > 40){
       navigateLightbox(touchDeltaX < 0 ? 1 : -1);
+    } else if (swipeDirection === 'vertical' && Math.abs(touchDeltaY) > 40){
+      navigateLightbox(touchDeltaY < 0 ? 1 : -1);
     }
-    isSwiping = false;
+    swipeDirection = null;
     touchDeltaX = 0;
+    touchDeltaY = 0;
   }, { passive: true });
 }
 

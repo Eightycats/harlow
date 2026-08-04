@@ -416,7 +416,7 @@ a.contact-line:hover{
 
 .exhibition-section{
   padding: 0 0 64px;
-  margin-top: 32px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -460,7 +460,7 @@ a.contact-line:hover{
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--stone);
-  margin: 0 0 32px;
+  margin: 0;
 }
 .exhibition-work{
   border-top: 1px solid var(--line);
