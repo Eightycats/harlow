@@ -366,9 +366,17 @@ a.contact-line:hover{
 /* ---------- Exhibitions page ---------- */
 .page-exhibitions{ background: #fff; color: var(--ink); }
 
-.exhibition-section{ padding-bottom: 96px; padding-top: 0; }
+.exhibition-section{
+  padding: 0 48px 96px;
+  margin-top: 80px; /* clear fixed header + breathing room */
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+}
 .exhibition-hero-image{
-  margin-top: 56px; /* just below fixed header */
+  max-width: 520px;
+  width: 100%;
+  flex-shrink: 0;
   overflow: hidden;
   background: var(--ink);
 }
@@ -378,8 +386,9 @@ a.contact-line:hover{
   display: block;
 }
 .exhibition-info{
-  max-width: 680px;
-  padding: 48px 48px 0;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
 }
 .exhibition-title{
   font-family: var(--display);
@@ -428,7 +437,11 @@ a.contact-line:hover{
 }
 
 @media (max-width: 600px){
-  .exhibition-info{ padding: 32px 24px 0; }
+  .exhibition-section{ padding: 0 0 64px; margin-top: 56px; flex-direction: column; gap: 24px; }
+  .exhibition-hero-image{
+    max-width: none;
+  }
+  .exhibition-info{ padding: 0 24px; }
 }
 
 /* ---------- Lightbox ---------- */
