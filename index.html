@@ -14,7 +14,6 @@
 <header class="site-header">
   <a href="index.html" class="wordmark">SH</a>
   <nav>
-    <a href="#" class="nav-gallery" id="nav-gallery"><span class="nav-gallery-icon">+</span> Gallery</a>
     <a href="about.html">About</a>
     <a href="exhibitions.html">Exhibitions</a>
     <a href="https://www.instagram.com/tigerharlow/" target="_blank" rel="noopener" class="nav-ig" aria-label="Instagram">
@@ -23,15 +22,26 @@
   </nav>
 </header>
 
+<nav class="cat-nav" id="cat-nav">
+  <!-- Populated by script.js -->
+</nav>
+
 <section class="hero">
-  <img src="images/painted-hills.jpg" alt="" class="hero-bg">
+  <div class="hero-bg hero-bg--a"></div>
+  <div class="hero-bg hero-bg--b"></div>
   <div class="hero-scrim"></div>
-  <h1 class="hero-name">Sarah<br>Harlow</h1>
-  <p class="hero-sub">original energy and nature without check</p>
+  <div class="hero-identity" id="hero-identity">
+    <h1 class="hero-name">Sarah<br>Harlow</h1>
+    <p class="hero-sub">original energy and nature without check</p>
+  </div>
 </section>
 
 <main>
   <section id="gallery" class="gallery-section">
+    <div class="gallery-header" id="gallery-header">
+      <h2 class="gallery-title" id="gallery-title"></h2>
+      <button class="gallery-close" id="gallery-close" aria-label="Close gallery">&times;</button>
+    </div>
     <div class="gallery-grid" id="gallery-grid">
       <!-- Populated by script.js -->
     </div>
@@ -40,7 +50,7 @@
 </main>
 
 <footer class="site-footer">
-  <span>© 2026 Sarah Harlow</span>
+  <span>&copy; 2026 Sarah Harlow</span>
 </footer>
 
 <script src="script.js"></script>

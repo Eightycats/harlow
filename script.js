@@ -1,149 +1,194 @@
-// ---------- Gallery: built from inline data ----------
-const WORKS = [
-  { "image": "images/creek-wading.jpg", "title": "Untitled #1", "description": "", "size": "tall" },
-  { "image": "images/painted-hills.jpg", "title": "Untitled #2", "description": "", "size": "tall" },
-  { "image": "images/trailside.jpg", "title": "Untitled #3", "description": "", "size": "tall" },
-  { "image": "images/bound-in-bloom.jpg", "title": "Untitled #4", "description": "", "size": "normal" },
-  { "image": "images/rail-yard.jpg", "title": "Untitled #5", "description": "", "size": "wide" },
-  { "image": "images/mountain-lake.jpg", "title": "Untitled #6", "description": "", "size": "normal" },
-  { "image": "images/hot-spring.jpg", "title": "Untitled #7", "description": "", "size": "normal" },
-  { "image": "images/studio-wall.jpg", "title": "Untitled #8", "description": "", "size": "wide" },
-  { "image": "images/resting-in-grass.jpg", "title": "Untitled #9", "description": "", "size": "normal" }
-];
+// ---------- State ----------
+let CATEGORIES = [];
+let activeCategoryIndex = -1;   // -1 = rotation mode (no category open)
+let rotationIndex = 0;
+let rotationTimer = null;
+let lightboxImages = [];
 
-// ---------- Hero / Gallery toggle ----------
-let galleryOpen = false;
+// DOM refs set during init
+let heroBgA, heroBgB, heroShowingA = true;
 
-function toggleGallery(){
-  const hero = document.querySelector('.hero');
-  const gallery = document.querySelector('.gallery-section');
-  const navBtn = document.getElementById('nav-gallery');
-  const icon = navBtn ? navBtn.querySelector('.nav-gallery-icon') : null;
-  if (!hero || !gallery) return;
+// ---------- Init ----------
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const resp = await fetch('works.json');
+    CATEGORIES = await resp.json();
+  } catch (e) {
+    console.error('Failed to load works.json', e);
+    return;
+  }
+  if (!CATEGORIES.length) return;
 
-  galleryOpen = !galleryOpen;
+  initHeroBgs();
+  buildCategoryNav();
+  showHeroImage(CATEGORIES[0].featured);
+  startRotation();
+});
 
-  if (galleryOpen){
-    hero.classList.add('hero--hidden');
-    gallery.classList.add('gallery--open');
-    if (icon) icon.textContent = '\u2212'; // minus
+// ---------- Hero background layers ----------
+function initHeroBgs() {
+  heroBgA = document.querySelector('.hero-bg--a');
+  heroBgB = document.querySelector('.hero-bg--b');
+  if (!heroBgA || !heroBgB) return;
+  heroBgA.style.opacity = '1';
+  heroBgB.style.opacity = '0';
+  heroShowingA = true;
+}
+
+function showHeroImage(src) {
+  if (!heroBgA || !heroBgB) return;
+  if (heroShowingA) {
+    heroBgB.style.backgroundImage = 'url("' + src + '")';
+    heroBgB.style.opacity = '1';
+    heroBgA.style.opacity = '0';
   } else {
-    hero.classList.remove('hero--hidden');
-    gallery.classList.remove('gallery--open');
-    if (icon) icon.textContent = '+';
+    heroBgA.style.backgroundImage = 'url("' + src + '")';
+    heroBgA.style.opacity = '1';
+    heroBgB.style.opacity = '0';
+  }
+  heroShowingA = !heroShowingA;
+}
+
+// ---------- Category nav ----------
+function buildCategoryNav() {
+  const nav = document.getElementById('cat-nav');
+  if (!nav) return;
+
+  CATEGORIES.forEach((cat, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-nav-btn';
+    btn.textContent = cat.label;
+    btn.dataset.index = i;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectCategory(i);
+    });
+    nav.appendChild(btn);
+  });
+
+  highlightNavItem(0);
+}
+
+function highlightNavItem(index) {
+  const btns = document.querySelectorAll('.cat-nav-btn');
+  btns.forEach((b, i) => {
+    b.classList.toggle('cat-nav-btn--active', i === index);
+  });
+}
+
+// ---------- Auto-rotation ----------
+function startRotation() {
+  stopRotation();
+  rotationTimer = setInterval(advanceRotation, 4500);
+
+  document.addEventListener('visibilitychange', handleVisibility);
+}
+
+function stopRotation() {
+  if (rotationTimer) {
+    clearInterval(rotationTimer);
+    rotationTimer = null;
   }
 }
 
-function initToggle(){
-  const hero = document.querySelector('.hero');
-  const navBtn = document.getElementById('nav-gallery');
+function advanceRotation() {
+  rotationIndex = (rotationIndex + 1) % CATEGORIES.length;
+  showHeroImage(CATEGORIES[rotationIndex].featured);
+  highlightNavItem(rotationIndex);
+}
 
-  if (hero){
-    hero.style.cursor = 'pointer';
-    hero.addEventListener('click', (e) => {
-      // Don't toggle if clicking a link inside hero
-      if (e.target.closest('a')) return;
-      if (!galleryOpen) toggleGallery();
-    });
-  }
-
-  if (navBtn){
-    navBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      toggleGallery();
-    });
+function handleVisibility() {
+  if (document.hidden) {
+    stopRotation();
+  } else if (activeCategoryIndex === -1) {
+    startRotation();
   }
 }
 
-// ---------- Hero slideshow ----------
-function initHeroSlideshow(){
+// ---------- Category selection ----------
+function selectCategory(index) {
   const hero = document.querySelector('.hero');
-  if (!hero) return;
+  const identity = document.getElementById('hero-identity');
+  const gallery = document.querySelector('.gallery-section');
 
-  const images = WORKS.map(w => w.image);
-
-  // Create two layers for crossfade
-  const bgA = hero.querySelector('.hero-bg');
-
-  // Start after the image already shown in the HTML hero
-  const heroSrc = bgA.getAttribute('src');
-  let current = images.indexOf(heroSrc);
-  if (current === -1) current = 0;
-  const bgB = document.createElement('img');
-  bgB.className = 'hero-bg hero-bg--b';
-  bgB.alt = '';
-  bgB.src = images[0];
-  hero.insertBefore(bgB, hero.querySelector('.hero-scrim'));
-
-  // bgA starts visible, bgB behind it
-  bgA.style.opacity = '1';
-  bgB.style.opacity = '0';
-
-  let showingA = true;
-
-  function advanceSlide(){
-    current = (current + 1) % images.length;
-    if (showingA){
-      bgB.src = images[current];
-      bgB.style.opacity = '1';
-      bgA.style.opacity = '0';
-    } else {
-      bgA.src = images[current];
-      bgA.style.opacity = '1';
-      bgB.style.opacity = '0';
-    }
-    showingA = !showingA;
+  // Close if same category clicked again
+  if (activeCategoryIndex === index) {
+    closeCategory();
+    return;
   }
 
-  // First transition after a short delay, then regular interval
+  // Open category
+  activeCategoryIndex = index;
+  stopRotation();
+
+  // Update hero
+  showHeroImage(CATEGORIES[index].featured);
+  highlightNavItem(index);
+  if (hero) hero.classList.add('hero--category-open');
+  if (identity) identity.classList.add('hero-identity--hidden');
+
+  // Build gallery
+  buildGallery(CATEGORIES[index]);
+  if (gallery) gallery.classList.add('gallery--open');
+
+  // Scroll gallery into view after hero shrinks
   setTimeout(() => {
-    advanceSlide();
-    setInterval(advanceSlide, 4000);
-  }, 1500);
+    if (gallery) gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 350);
+}
+
+function closeCategory() {
+  const hero = document.querySelector('.hero');
+  const identity = document.getElementById('hero-identity');
+  const gallery = document.querySelector('.gallery-section');
+
+  activeCategoryIndex = -1;
+  if (hero) hero.classList.remove('hero--category-open');
+  if (identity) identity.classList.remove('hero-identity--hidden');
+  if (gallery) gallery.classList.remove('gallery--open');
+
+  // Resume rotation from current position
+  startRotation();
 }
 
 // ---------- Gallery ----------
-function loadGallery(){
+function buildGallery(cat) {
   const grid = document.getElementById('gallery-grid');
+  const title = document.getElementById('gallery-title');
+  const closeBtn = document.getElementById('gallery-close');
   if (!grid) return;
+
+  // Set header
+  if (title) title.textContent = cat.label;
+  if (closeBtn) {
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      closeCategory();
+    };
+  }
+
+  // Clear existing
+  grid.innerHTML = '';
+  lightboxImages = cat.images;
 
   const frag = document.createDocumentFragment();
 
-  WORKS.forEach((work, index) => {
+  cat.images.forEach((src, index) => {
     const figure = document.createElement('figure');
     figure.className = 'piece';
-    if (work.size === 'tall') figure.classList.add('piece--tall');
-    if (work.size === 'wide') figure.classList.add('piece--wide');
 
     const img = document.createElement('img');
     img.className = 'piece-img';
-    img.src = work.image || '';
-    img.alt = work.title ? work.title : 'Untitled artwork';
+    img.src = src;
+    img.alt = cat.label + ' artwork';
     img.loading = 'lazy';
     img.onerror = () => {
       figure.classList.add('piece--missing');
       img.remove();
     };
 
-    const caption = document.createElement('figcaption');
-
-    const title = document.createElement('span');
-    title.className = 'p-title';
-    title.textContent = work.title || 'Untitled';
-
-    const meta = document.createElement('span');
-    meta.className = 'p-meta';
-    meta.textContent = work.description || '';
-
-    caption.appendChild(title);
-    if (work.description) caption.appendChild(meta);
-
     figure.appendChild(img);
-    figure.appendChild(caption);
-
-    // Click to open lightbox
     figure.addEventListener('click', () => openLightbox(index));
-
     frag.appendChild(figure);
   });
 
@@ -155,11 +200,10 @@ function loadGallery(){
 let lightboxEl = null;
 let lightboxImgA = null;
 let lightboxImgB = null;
-let lightboxTitle = null;
 let lightboxIndex = 0;
 let lightboxShowingA = true;
 
-function createLightbox(){
+function createLightbox() {
   lightboxEl = document.createElement('div');
   lightboxEl.className = 'lightbox';
   lightboxEl.innerHTML = `
@@ -171,13 +215,11 @@ function createLightbox(){
       <img class="lightbox-img lightbox-img--a" src="" alt="">
       <img class="lightbox-img lightbox-img--b" src="" alt="">
     </div>
-    <div class="lightbox-caption"></div>
   `;
   document.body.appendChild(lightboxEl);
 
   lightboxImgA = lightboxEl.querySelector('.lightbox-img--a');
   lightboxImgB = lightboxEl.querySelector('.lightbox-img--b');
-  lightboxTitle = lightboxEl.querySelector('.lightbox-caption');
 
   lightboxImgA.style.opacity = '1';
   lightboxImgB.style.opacity = '0';
@@ -200,12 +242,12 @@ function createLightbox(){
     if (e.key === 'ArrowRight') navigateLightbox(1);
   });
 
-  // Touch swipe support (horizontal and vertical)
+  // Touch swipe support
   let touchStartX = 0;
   let touchStartY = 0;
   let touchDeltaX = 0;
   let touchDeltaY = 0;
-  let swipeDirection = null; // 'horizontal', 'vertical', or null
+  let swipeDirection = null;
 
   lightboxEl.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) return;
@@ -221,11 +263,10 @@ function createLightbox(){
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
 
-    // Lock in direction on first significant movement
-    if (!swipeDirection && (Math.abs(dx) > 10 || Math.abs(dy) > 10)){
+    if (!swipeDirection && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
       swipeDirection = Math.abs(dx) >= Math.abs(dy) ? 'horizontal' : 'vertical';
     }
-    if (swipeDirection){
+    if (swipeDirection) {
       e.preventDefault();
       touchDeltaX = dx;
       touchDeltaY = dy;
@@ -233,9 +274,9 @@ function createLightbox(){
   }, { passive: false });
 
   lightboxEl.addEventListener('touchend', () => {
-    if (swipeDirection === 'horizontal' && Math.abs(touchDeltaX) > 40){
+    if (swipeDirection === 'horizontal' && Math.abs(touchDeltaX) > 40) {
       navigateLightbox(touchDeltaX < 0 ? 1 : -1);
-    } else if (swipeDirection === 'vertical' && Math.abs(touchDeltaY) > 40){
+    } else if (swipeDirection === 'vertical' && Math.abs(touchDeltaY) > 40) {
       navigateLightbox(touchDeltaY < 0 ? 1 : -1);
     }
     swipeDirection = null;
@@ -244,13 +285,12 @@ function createLightbox(){
   }, { passive: true });
 }
 
-function openLightbox(index){
+function openLightbox(index) {
   if (!lightboxEl) createLightbox();
   lightboxIndex = index;
-  // Set both images to the same source on open (no crossfade needed)
-  const work = WORKS[lightboxIndex];
-  lightboxImgA.src = work.image;
-  lightboxImgA.alt = work.title || 'Untitled artwork';
+  const src = lightboxImages[lightboxIndex];
+  lightboxImgA.src = src;
+  lightboxImgA.alt = 'Artwork';
   lightboxImgA.style.opacity = '1';
   lightboxImgB.style.opacity = '0';
   lightboxShowingA = true;
@@ -258,23 +298,23 @@ function openLightbox(index){
   document.body.style.overflow = 'hidden';
 }
 
-function closeLightbox(){
+function closeLightbox() {
   lightboxEl.classList.remove('lightbox--open');
   document.body.style.overflow = '';
 }
 
-function navigateLightbox(dir){
-  lightboxIndex = (lightboxIndex + dir + WORKS.length) % WORKS.length;
-  const work = WORKS[lightboxIndex];
+function navigateLightbox(dir) {
+  lightboxIndex = (lightboxIndex + dir + lightboxImages.length) % lightboxImages.length;
+  const src = lightboxImages[lightboxIndex];
 
-  if (lightboxShowingA){
-    lightboxImgB.src = work.image;
-    lightboxImgB.alt = work.title || 'Untitled artwork';
+  if (lightboxShowingA) {
+    lightboxImgB.src = src;
+    lightboxImgB.alt = 'Artwork';
     lightboxImgB.style.opacity = '1';
     lightboxImgA.style.opacity = '0';
   } else {
-    lightboxImgA.src = work.image;
-    lightboxImgA.alt = work.title || 'Untitled artwork';
+    lightboxImgA.src = src;
+    lightboxImgA.alt = 'Artwork';
     lightboxImgA.style.opacity = '1';
     lightboxImgB.style.opacity = '0';
   }
@@ -282,7 +322,7 @@ function navigateLightbox(dir){
 }
 
 // ---------- Fade pieces in as they enter view ----------
-function observePieces(){
+function observePieces() {
   const pieces = document.querySelectorAll('.piece');
   if (!pieces.length) return;
 
@@ -296,7 +336,7 @@ function observePieces(){
 
   const io = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting){
+      if (entry.isIntersecting) {
         entry.target.style.opacity = 1;
         entry.target.style.transform = 'translateY(0)';
         io.unobserve(entry.target);
@@ -306,9 +346,3 @@ function observePieces(){
 
   pieces.forEach(p => io.observe(p));
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadGallery();
-  initHeroSlideshow();
-  initToggle();
-});
