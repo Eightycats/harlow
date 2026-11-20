@@ -156,7 +156,6 @@
       "images/Studio_work/DSC0472.webp",
       "images/Studio_work/DSC0474.webp",
       "images/Studio_work/DSC0475.webp",
-      "images/Studio_work/DSC0476.webp",
       "images/Studio_work/DSC0477.webp",
       "images/Studio_work/DSC0478.webp",
       "images/Studio_work/DSC0479.webp",
@@ -377,48 +376,33 @@
   {
     "id": "work-on-paper",
     "label": "Work on Paper",
-    "featured": "images/Work_on_Paper/DSC0096.webp",
+    "featured": "images/Work_on_Paper/_DSC0116.webp",
     "images": [
-      "images/Work_on_Paper/DSC0096.webp",
-      "images/Work_on_Paper/DSC0097.webp",
-      "images/Work_on_Paper/DSC0101.webp",
-      "images/Work_on_Paper/DSC0103.webp",
-      "images/Work_on_Paper/DSC0107.webp",
-      "images/Work_on_Paper/DSC0108.webp",
-      "images/Work_on_Paper/DSC0112.webp",
-      "images/Work_on_Paper/DSC0116.webp",
-      "images/Work_on_Paper/DSC0128.webp",
-      "images/Work_on_Paper/DSC0132.webp",
-      "images/Work_on_Paper/DSC0136.webp"
+      "images/Work_on_Paper/_DSC0101.webp",
+      "images/Work_on_Paper/_DSC0108.webp",
+      "images/Work_on_Paper/_DSC0112.webp",
+      "images/Work_on_Paper/_DSC0116.webp",
+      "images/Work_on_Paper/_DSC0128.webp",
+      "images/Work_on_Paper/_DSC0136.webp"
     ]
   },
   {
     "id": "incomplete",
     "label": "Incomplete",
-    "featured": "images/Incomplete/DSC0689.webp",
+    "featured": "images/Incomplete/DSC0693.webp",
     "images": [
       "images/Incomplete/DSC0689.webp",
       "images/Incomplete/DSC0690.webp",
       "images/Incomplete/DSC0691.webp",
-      "images/Incomplete/DSC0692.webp",
-      "images/Incomplete/DSC0692_copy.webp",
-      "images/Incomplete/DSC0692_copy_2.webp",
       "images/Incomplete/DSC0693.webp",
-      "images/Incomplete/DSC0693_copy.webp",
-      "images/Incomplete/DSC0693_copy_2.webp",
-      "images/Incomplete/DSC0694.webp",
       "images/Incomplete/DSC0695.webp",
-      "images/Incomplete/DSC0696.webp",
-      "images/Incomplete/DSC0697.webp",
-      "images/Incomplete/DSC0697_copy.webp",
-      "images/Incomplete/DSC0697_copy_2.webp",
-      "images/Incomplete/DSC0699.webp"
+      "images/Incomplete/DSC0696.webp"
     ]
   },
   {
     "id": "college",
     "label": "College",
-    "featured": "images/College/draw4.webp",
+    "featured": "images/College/draw5.webp",
     "images": [
       "images/College/draw4.webp",
       "images/College/draw5.webp",
