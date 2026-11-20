@@ -1,12 +1,6 @@
 // ---------- State ----------
 let CATEGORIES = [];
-let activeCategoryIndex = -1;   // -1 = rotation mode (no category open)
-let rotationIndex = 0;
-let rotationTimer = null;
 let lightboxImages = [];
-
-// DOM refs set during init
-let heroBgA, heroBgB, heroShowingA = true;
 
 // ---------- Init ----------
 document.addEventListener('DOMContentLoaded', async () => {
@@ -19,136 +13,81 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   if (!CATEGORIES.length) return;
 
-  initHeroBgs();
-  buildCategoryNav();
-  showHeroImage(CATEGORIES[0].featured);
-  startRotation();
+  buildCardGrid();
 });
 
-// ---------- Hero background layers ----------
-function initHeroBgs() {
-  heroBgA = document.querySelector('.hero-bg--a');
-  heroBgB = document.querySelector('.hero-bg--b');
-  if (!heroBgA || !heroBgB) return;
-  heroBgA.style.opacity = '1';
-  heroBgB.style.opacity = '0';
-  heroShowingA = true;
-}
+// ---------- Category card grid ----------
+function buildCardGrid() {
+  const grid = document.getElementById('card-grid');
+  if (!grid) return;
 
-function showHeroImage(src) {
-  if (!heroBgA || !heroBgB) return;
-  if (heroShowingA) {
-    heroBgB.style.backgroundImage = 'url("' + src + '")';
-    heroBgB.style.opacity = '1';
-    heroBgA.style.opacity = '0';
-  } else {
-    heroBgA.style.backgroundImage = 'url("' + src + '")';
-    heroBgA.style.opacity = '1';
-    heroBgB.style.opacity = '0';
-  }
-  heroShowingA = !heroShowingA;
-}
-
-// ---------- Category nav ----------
-function buildCategoryNav() {
-  const nav = document.getElementById('cat-nav');
-  if (!nav) return;
+  const frag = document.createDocumentFragment();
 
   CATEGORIES.forEach((cat, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'cat-nav-btn';
-    btn.textContent = cat.label;
-    btn.dataset.index = i;
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectCategory(i);
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', cat.label);
+
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'cat-card-img-wrap';
+
+    const img = document.createElement('img');
+    img.className = 'cat-card-img';
+    img.src = cat.featured;
+    img.alt = cat.label;
+    img.loading = i < 8 ? 'eager' : 'lazy';
+    img.onerror = () => {
+      imgWrap.style.background = 'var(--canvas-dim)';
+      img.remove();
+    };
+
+    const label = document.createElement('div');
+    label.className = 'cat-card-label';
+    label.textContent = cat.label;
+
+    imgWrap.appendChild(img);
+    card.appendChild(imgWrap);
+    card.appendChild(label);
+
+    card.addEventListener('click', () => openCategory(i));
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openCategory(i);
+      }
     });
-    nav.appendChild(btn);
+
+    frag.appendChild(card);
   });
 
-  highlightNavItem(0);
-}
-
-function highlightNavItem(index) {
-  const btns = document.querySelectorAll('.cat-nav-btn');
-  btns.forEach((b, i) => {
-    b.classList.toggle('cat-nav-btn--active', i === index);
-  });
-}
-
-// ---------- Auto-rotation ----------
-function startRotation() {
-  stopRotation();
-  rotationTimer = setInterval(advanceRotation, 4500);
-
-  document.addEventListener('visibilitychange', handleVisibility);
-}
-
-function stopRotation() {
-  if (rotationTimer) {
-    clearInterval(rotationTimer);
-    rotationTimer = null;
-  }
-}
-
-function advanceRotation() {
-  rotationIndex = (rotationIndex + 1) % CATEGORIES.length;
-  showHeroImage(CATEGORIES[rotationIndex].featured);
-  highlightNavItem(rotationIndex);
-}
-
-function handleVisibility() {
-  if (document.hidden) {
-    stopRotation();
-  } else if (activeCategoryIndex === -1) {
-    startRotation();
-  }
+  grid.appendChild(frag);
 }
 
 // ---------- Category selection ----------
-function selectCategory(index) {
-  const hero = document.querySelector('.hero');
-  const identity = document.getElementById('hero-identity');
+function openCategory(index) {
+  const cardSection = document.getElementById('card-grid-section');
   const gallery = document.querySelector('.gallery-section');
 
-  // Close if same category clicked again
-  if (activeCategoryIndex === index) {
-    closeCategory();
-    return;
-  }
+  // Hide card grid, show gallery
+  if (cardSection) cardSection.classList.add('card-grid-section--hidden');
 
-  // Open category
-  activeCategoryIndex = index;
-  stopRotation();
-
-  // Update hero
-  showHeroImage(CATEGORIES[index].featured);
-  highlightNavItem(index);
-  if (hero) hero.classList.add('hero--category-open');
-  if (identity) identity.classList.add('hero-identity--hidden');
-
-  // Build gallery
   buildGallery(CATEGORIES[index]);
-  if (gallery) gallery.classList.add('gallery--open');
-
-  // Scroll gallery into view after hero shrinks
-  setTimeout(() => {
-    if (gallery) gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 350);
+  if (gallery) {
+    gallery.classList.add('gallery--open');
+    gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function closeCategory() {
-  const hero = document.querySelector('.hero');
-  const identity = document.getElementById('hero-identity');
+  const cardSection = document.getElementById('card-grid-section');
   const gallery = document.querySelector('.gallery-section');
 
-  activeCategoryIndex = -1;
-  if (hero) hero.classList.remove('hero--category-open');
-  if (identity) identity.classList.remove('hero-identity--hidden');
   if (gallery) gallery.classList.remove('gallery--open');
+  if (cardSection) cardSection.classList.remove('card-grid-section--hidden');
 
-  // Resume rotation from current position
-  startRotation();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ---------- Gallery ----------
