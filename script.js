@@ -1,6 +1,7 @@
 // ---------- State ----------
 let CATEGORIES = [];
 let lightboxImages = [];
+let currentCategoryId = null;
 
 // ---------- Init ----------
 document.addEventListener('DOMContentLoaded', async () => {
@@ -14,7 +15,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!CATEGORIES.length) return;
 
   buildCardGrid();
+
+  // Handle initial hash on page load
+  handleHash();
+
+  // Listen for back/forward navigation
+  window.addEventListener('hashchange', handleHash);
 });
+
+// ---------- Hash routing ----------
+function handleHash() {
+  const hash = window.location.hash.replace(/^#/, '');
+  if (!hash) {
+    closeCategory(false);
+    return;
+  }
+
+  const parts = hash.split('/');
+  const catId = parts[0];
+  const imageIndex = parts.length > 1 ? parseInt(parts[1], 10) : null;
+
+  const catIndex = CATEGORIES.findIndex(c => c.id === catId);
+  if (catIndex === -1) return;
+
+  openCategory(catIndex, false);
+
+  if (imageIndex !== null && !isNaN(imageIndex) && imageIndex >= 0 && imageIndex < CATEGORIES[catIndex].images.length) {
+    openLightbox(imageIndex, false);
+  }
+}
+
+function pushHash(hash) {
+  if (window.location.hash !== '#' + hash) {
+    history.pushState(null, '', '#' + hash);
+  }
+}
 
 // ---------- Category card grid ----------
 function buildCardGrid() {
@@ -66,26 +101,39 @@ function buildCardGrid() {
 }
 
 // ---------- Category selection ----------
-function openCategory(index) {
+function openCategory(index, updateHash = true) {
   const cardSection = document.getElementById('card-grid-section');
   const gallery = document.querySelector('.gallery-section');
+  const cat = CATEGORIES[index];
+
+  currentCategoryId = cat.id;
 
   // Hide card grid, show gallery
   if (cardSection) cardSection.classList.add('card-grid-section--hidden');
 
-  buildGallery(CATEGORIES[index]);
+  buildGallery(cat);
   if (gallery) {
     gallery.classList.add('gallery--open');
-    gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  if (updateHash) {
+    pushHash(cat.id);
   }
 }
 
-function closeCategory() {
+function closeCategory(updateHash = true) {
   const cardSection = document.getElementById('card-grid-section');
   const gallery = document.querySelector('.gallery-section');
 
   if (gallery) gallery.classList.remove('gallery--open');
   if (cardSection) cardSection.classList.remove('card-grid-section--hidden');
+
+  currentCategoryId = null;
+
+  if (updateHash) {
+    history.pushState(null, '', window.location.pathname);
+  }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -224,7 +272,7 @@ function createLightbox() {
   }, { passive: true });
 }
 
-function openLightbox(index) {
+function openLightbox(index, updateHash = true) {
   if (!lightboxEl) createLightbox();
   lightboxIndex = index;
   const src = lightboxImages[lightboxIndex];
@@ -235,11 +283,20 @@ function openLightbox(index) {
   lightboxShowingA = true;
   lightboxEl.classList.add('lightbox--open');
   document.body.style.overflow = 'hidden';
+
+  if (updateHash && currentCategoryId) {
+    pushHash(currentCategoryId + '/' + lightboxIndex);
+  }
 }
 
 function closeLightbox() {
   lightboxEl.classList.remove('lightbox--open');
   document.body.style.overflow = '';
+
+  // Restore hash to just the gallery
+  if (currentCategoryId) {
+    pushHash(currentCategoryId);
+  }
 }
 
 function navigateLightbox(dir) {
@@ -258,6 +315,11 @@ function navigateLightbox(dir) {
     lightboxImgB.style.opacity = '0';
   }
   lightboxShowingA = !lightboxShowingA;
+
+  // Update hash to reflect current image
+  if (currentCategoryId) {
+    pushHash(currentCategoryId + '/' + lightboxIndex);
+  }
 }
 
 // ---------- Fade pieces in as they enter view ----------
