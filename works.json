@@ -193,7 +193,7 @@
   {
     "id": "early-work",
     "label": "Early Work",
-    "featured": "images/Early_Work/2008-10-29 16.49.18.webp",
+    "featured": "images/Early_Work/2008-10-22 13.23.39.webp",
     "images": [
       "images/Early_Work/2008-10-22 13.12.08.webp",
       "images/Early_Work/2008-10-22 13.12.17.webp",
@@ -202,7 +202,6 @@
       "images/Early_Work/2008-10-22 13.23.39.webp",
       "images/Early_Work/2008-10-22 13.24.03.webp",
       "images/Early_Work/2008-10-22 17.36.34.webp",
-      "images/Early_Work/2008-10-22 17.36.42.webp",
       "images/Early_Work/2008-10-22 17.36.47.webp",
       "images/Early_Work/2008-10-29 16.15.35.webp",
       "images/Early_Work/2008-10-29 16.17.38.webp",
@@ -308,20 +307,14 @@
   {
     "id": "landscapes",
     "label": "Landscapes",
-    "featured": "images/Landscapes/paint2.webp",
+    "featured": "images/Landscapes/paint4.webp",
     "images": [
       "images/Landscapes/paint2.webp",
       "images/Landscapes/paint3.webp",
       "images/Landscapes/paint4.webp",
       "images/Landscapes/paint5.webp",
       "images/Landscapes/paint6.webp",
-      "images/Landscapes/paint7.webp",
-      "images/Landscapes/paintTYLER2.webp",
-      "images/Landscapes/paintTYLER3.webp",
-      "images/Landscapes/paintTYLER4.webp",
-      "images/Landscapes/paintTYLER5.webp",
-      "images/Landscapes/paintTYLER6.webp",
-      "images/Landscapes/paintTYLER7.webp"
+      "images/Landscapes/paint7.webp"
     ]
   },
   {
