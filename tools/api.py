@@ -211,6 +211,9 @@ class CuratorHandler(BaseHTTPRequestHandler):
             elif m := re.match(r"/api/category/([^/]+)/finalize", path):
                 self._handle_finalize(m.group(1))
 
+            elif m := re.match(r"/api/category/([^/]+)/weed", path):
+                self._handle_weed(m.group(1))
+
             else:
                 self._send_error(404, "Not found")
         except Exception as e:
@@ -540,3 +543,30 @@ class CuratorHandler(BaseHTTPRequestHandler):
                 return
 
         self._send_error(404, f"Category {cat_id} not in works.json")
+
+    def _handle_weed(self, cat_id):
+        """Move a single image to _weeds/. Body: {path: str}"""
+        body = self._read_body()
+        image_path = body.get("path")
+        if not image_path:
+            self._send_error(400, "Missing path")
+            return
+
+        d = _category_dir(cat_id)
+        if not d:
+            self._send_error(404, f"Category {cat_id} not found")
+            return
+
+        full_path = _resolve(image_path)
+        if not full_path.exists():
+            self._send_error(404, f"Image not found: {image_path}")
+            return
+
+        weeds_dir = d / "_weeds"
+        weeds_dir.mkdir(exist_ok=True)
+        shutil.move(str(full_path), str(weeds_dir / full_path.name))
+
+        if str(full_path) in THUMB_CACHE:
+            del THUMB_CACHE[str(full_path)]
+
+        self._send_json({"weeded": image_path})

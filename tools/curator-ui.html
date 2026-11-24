@@ -131,6 +131,12 @@
     display: flex; justify-content: space-between; align-items: center;
   }
   .image-card .info .name { color: var(--text); font-weight: 500; }
+  .image-card .weed-btn {
+    padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    background: rgba(229,115,115,0.15); color: var(--red); border: 1px solid var(--red);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .image-card .weed-btn:hover { background: var(--red); color: #fff; }
   .confidence {
     padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;
   }
@@ -985,25 +991,50 @@ async function loadHeroStep() {
 
   content.innerHTML = `
     <p style="margin-bottom:16px; color:var(--text-dim); font-size:13px;">
-      Click an image to select it as the hero/featured image for this category.
+      Click an image to select it as the hero/featured image. Use the <strong>Hide</strong> button to remove unwanted images.
     </p>
-    <div class="image-grid">${images.map(img => `
+    <div class="image-grid" id="hero-grid">${images.map(img => `
       <div class="image-card" data-path="${img.path}">
         <img src="/thumb/${img.path}" loading="lazy" alt="${img.name}">
         <div class="info">
           <span class="name">${img.name}</span>
+          <button class="weed-btn" data-weed-path="${img.path}">Hide</button>
         </div>
       </div>
     `).join('')}</div>
   `;
 
   content.querySelectorAll('.image-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('weed-btn')) return;
       content.querySelectorAll('.image-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       selectedHero = card.dataset.path;
       const setBtn = document.getElementById('btn-set-hero');
       if (setBtn) setBtn.disabled = false;
+    });
+  });
+
+  content.querySelectorAll('.weed-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const path = btn.dataset.weedPath;
+      if (!confirm(`Hide "${path.split('/').pop()}"? It will be moved to _weeds/.`)) return;
+      try {
+        await fetchJSON(`/api/category/${currentCat.id}/weed`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({path}),
+        });
+        const card = btn.closest('.image-card');
+        card.remove();
+        if (selectedHero === path) selectedHero = null;
+        const remaining = document.querySelectorAll('#hero-grid .image-card').length;
+        const infoEl = document.querySelector('.action-bar .info-text');
+        if (infoEl) infoEl.textContent = `${remaining} images available`;
+      } catch (err) {
+        alert('Error hiding image: ' + err.message);
+      }
     });
   });
 
@@ -1116,24 +1147,18 @@ async function loadFinalizeStep() {
   const images = await fetchJSON(`/api/category/${currentCat.id}/images`);
   const works = categories.find(c => c.id === currentCat.id);
 
+  const isRefinalize = currentCat.completed;
   content.innerHTML = `
     <div class="summary-card">
-      <h3>Finalize: ${currentCat.label}</h3>
+      <h3>${isRefinalize ? 'Update' : 'Finalize'}: ${currentCat.label}</h3>
+      ${isRefinalize ? '<p style="margin-bottom:12px; font-size:13px; color:var(--green);">This category has been finalized. You can go back to change the hero or hide images, then re-save here.</p>' : ''}
       <div class="summary-row">
         <span>Category</span>
         <span>${currentCat.label}</span>
       </div>
       <div class="summary-row">
-        <span>Original image count</span>
-        <span>${currentCat.imageCount}</span>
-      </div>
-      <div class="summary-row">
         <span>Current image count</span>
         <span>${images.length}</span>
-      </div>
-      <div class="summary-row">
-        <span>Images removed</span>
-        <span>${currentCat.imageCount - images.length}</span>
       </div>
       <p style="margin-top:16px; font-size:13px; color:var(--text-dim);">
         This will update <code>works.json</code> with the current image list and hero image.
@@ -1144,8 +1169,9 @@ async function loadFinalizeStep() {
 
   actionBar.style.display = 'flex';
   actionBar.innerHTML = `
+    <span class="info-text">${images.length} images</span>
     <span class="spacer"></span>
-    <button class="btn btn-success" id="btn-finalize">Save to works.json</button>
+    <button class="btn btn-success" id="btn-finalize">${isRefinalize ? 'Re-save to works.json' : 'Save to works.json'}</button>
   `;
 
   document.getElementById('btn-finalize').addEventListener('click', async () => {
@@ -1163,19 +1189,12 @@ async function loadFinalizeStep() {
       currentCat.step = 5;
       currentCat.completed = true;
 
-      // Refresh categories
+      // Refresh categories and reload the finalize step so user can still navigate
       categories = await fetchJSON('/api/categories');
       currentCat = categories.find(c => c.id === currentCat.id);
       renderSidebar();
       renderSteps();
-
-      content.innerHTML = `
-        <div class="empty-state">
-          <h2>Category Complete</h2>
-          <p>${currentCat.label} has been finalized. Select another category to continue.</p>
-        </div>
-      `;
-      actionBar.style.display = 'none';
+      await loadStep(4);
     } catch (err) {
       alert('Error: ' + err.message);
       btn.disabled = false;
