@@ -1,0 +1,47 @@
+{
+  "college": {
+    "step": 4,
+    "hero": "images/College/draw5.jpg",
+    "hero_source": "images/College/draw5.jpg",
+    "completed": true
+  },
+  "comissions": {
+    "step": 3,
+    "hero": "images/Comissions/2008-09-06 10.51.07.jpg",
+    "hero_source": "images/Comissions/2008-09-06 10.51.07.jpg"
+  },
+  "incomplete": {
+    "step": 5,
+    "hero": "images/Incomplete/DSC0693.JPG",
+    "hero_source": "images/Incomplete/DSC0693.JPG",
+    "completed": true
+  },
+  "work-on-paper": {
+    "step": 5,
+    "hero": "images/Work_on_Paper/_DSC0116.JPG",
+    "hero_source": "images/Work_on_Paper/_DSC0116.JPG",
+    "completed": true
+  },
+  "gate-paintings": {
+    "step": 5,
+    "hero": "images/Gate_Paintings/DSC0558.JPG",
+    "hero_source": "images/Gate_Paintings/DSC0558.JPG",
+    "completed": true
+  },
+  "ceramics": {
+    "step": 5,
+    "hero": "images/Ceramics/DSC0064.JPG",
+    "hero_source": "images/Ceramics/DSC0064.JPG",
+    "completed": true
+  },
+  "egg-tempera": {
+    "step": 5,
+    "completed": true
+  },
+  "early-work": {
+    "step": 5,
+    "hero": "images/Early_Work/2008-10-29 16.49.18.jpg",
+    "hero_source": "images/Early_Work/2008-10-29 16.49.18.jpg",
+    "completed": true
+  }
+}

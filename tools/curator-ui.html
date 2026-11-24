@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harlow Portfolio — Image Curator</title>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --surface: #242424;
+    --surface2: #2e2e2e;
+    --border: #3a3a3a;
+    --text: #e0e0e0;
+    --text-dim: #888;
+    --accent: #5b9bd5;
+    --accent-hover: #7bb3e8;
+    --green: #4caf50;
+    --red: #e57373;
+    --orange: #ffb74d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; height: 100vh; overflow: hidden;
+  }
+
+  /* ── Sidebar ─────────────────────────────────── */
+  .sidebar {
+    width: 260px; min-width: 260px;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  .sidebar h1 {
+    font-size: 14px; padding: 16px; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+  .cat-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .cat-item:hover { background: var(--surface2); }
+  .cat-item.active { background: var(--accent); color: #fff; }
+  .cat-item .count {
+    font-size: 11px; color: var(--text-dim);
+    margin-left: auto; white-space: nowrap;
+  }
+  .cat-item.active .count { color: rgba(255,255,255,0.7); }
+  .cat-status {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); flex-shrink: 0;
+  }
+  .cat-status.done { background: var(--green); }
+  .cat-status.in-progress { background: var(--orange); }
+  .cat-name { font-size: 13px; }
+
+  /* ── Main area ───────────────────────────────── */
+  .main {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .toolbar {
+    padding: 12px 20px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    min-height: 52px;
+  }
+  .toolbar h2 { font-size: 16px; font-weight: 600; }
+  .steps {
+    display: flex; gap: 4px; margin-left: auto;
+  }
+  .step-pill {
+    padding: 4px 12px; font-size: 12px; border-radius: 12px;
+    background: var(--surface2); color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s;
+    border: 1px solid var(--border);
+  }
+  .step-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .step-pill.done { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .content {
+    flex: 1; overflow-y: auto; padding: 20px;
+  }
+  .content.no-pad {
+    padding: 0; overflow: hidden;
+  }
+
+  /* ── Buttons ─────────────────────────────────── */
+  .btn {
+    padding: 8px 16px; border: none; border-radius: 6px;
+    font-size: 13px; cursor: pointer; transition: all 0.15s;
+    font-weight: 500;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { opacity: 0.9; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { opacity: 0.9; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Image grid ──────────────────────────────── */
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .image-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .image-card:hover { border-color: var(--accent); }
+  .image-card.selected { border-color: var(--green); box-shadow: 0 0 0 2px var(--green); }
+  .image-card.rejected { border-color: var(--red); opacity: 0.5; }
+  .image-card img {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover;
+    display: block; background: #111;
+  }
+  .image-card .info {
+    padding: 8px 12px; font-size: 12px; color: var(--text-dim);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .image-card .info .name { color: var(--text); font-weight: 500; }
+  .confidence {
+    padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  }
+  .confidence.high { background: rgba(76,175,80,0.2); color: var(--green); }
+  .confidence.medium { background: rgba(255,183,77,0.2); color: var(--orange); }
+  .confidence.low { background: rgba(229,115,115,0.2); color: var(--red); }
+
+  /* ── Crop editor ─────────────────────────────── */
+  .crop-editor {
+    display: flex; gap: 0; height: 100%;
+  }
+  .crop-canvas-panel {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 16px; min-width: 0;
+    background: #111;
+  }
+  .crop-canvas-panel canvas {
+    cursor: crosshair;
+    max-width: 100%; max-height: 100%;
+  }
+  .crop-image-label {
+    margin-top: 8px; font-size: 13px; color: var(--text-dim);
+    text-align: center;
+  }
+  .filmstrip {
+    width: 160px; min-width: 160px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    overflow-y: auto; padding: 8px;
+  }
+  .filmstrip-item {
+    margin-bottom: 6px; border: 2px solid var(--border);
+    border-radius: 4px; overflow: hidden;
+    cursor: pointer; transition: border-color 0.15s;
+    position: relative;
+  }
+  .filmstrip-item:hover { border-color: var(--accent); }
+  .filmstrip-item.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .filmstrip-item img {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
+  }
+  .filmstrip-badge {
+    position: absolute; top: 2px; right: 2px;
+    padding: 1px 5px; border-radius: 3px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+  }
+  .filmstrip-badge.auto { background: var(--green); color: #fff; }
+  .filmstrip-badge.manual { background: var(--accent); color: #fff; }
+  .filmstrip-badge.skipped { background: var(--red); color: #fff; }
+  .filmstrip-badge.weed { background: #b71c1c; color: #fff; }
+  .filmstrip-badge.pending { background: var(--border); color: var(--text-dim); }
+  .filmstrip-name {
+    font-size: 9px; padding: 2px 4px; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── Duplicate groups ────────────────────────── */
+  .dup-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .dup-group h3 {
+    font-size: 13px; color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .dup-row {
+    display: flex; gap: 12px; overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .dup-item {
+    min-width: 200px; max-width: 200px;
+    border: 2px solid var(--border);
+    border-radius: 6px; overflow: hidden;
+    cursor: pointer; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .dup-item:hover { border-color: var(--accent); }
+  .dup-item.keeper { border-color: var(--green); box-shadow: 0 0 0 2px var(--green); }
+  .dup-item img {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
+  }
+  .dup-item .label {
+    padding: 6px 8px; font-size: 11px; text-align: center;
+    color: var(--text-dim); background: var(--surface2);
+  }
+  .dup-item.keeper .label { background: var(--green); color: #fff; font-weight: 600; }
+
+  /* ── Summary / Finalize ──────────────────────── */
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px; max-width: 600px;
+    margin: 20px auto;
+  }
+  .summary-card h3 { margin-bottom: 16px; }
+  .summary-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+
+  /* ── Loading ─────────────────────────────────── */
+  .loading {
+    display: flex; align-items: center; gap: 12px;
+    padding: 40px; color: var(--text-dim); font-size: 14px;
+  }
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Empty state ─────────────────────────────── */
+  .empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%; color: var(--text-dim); text-align: center;
+    padding: 40px;
+  }
+  .empty-state h2 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Action bar ──────────────────────────────── */
+  .action-bar {
+    padding: 12px 20px; background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; gap: 12px; align-items: center;
+  }
+  .action-bar .spacer { flex: 1; }
+  .action-bar .info-text { font-size: 12px; color: var(--text-dim); }
+
+  /* ── Threshold slider ────────────────────────── */
+  .threshold-control {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .threshold-control input[type="range"] {
+    width: 120px;
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+  <h1>Image Curator</h1>
+  <div id="cat-list"></div>
+</div>
+
+<div class="main">
+  <div class="toolbar" id="toolbar">
+    <h2 id="toolbar-title">Select a category</h2>
+    <div class="steps" id="steps"></div>
+  </div>
+  <div class="content" id="content">
+    <div class="empty-state">
+      <h2>Harlow Portfolio Curator</h2>
+      <p>Select a category from the sidebar to begin reviewing images.</p>
+    </div>
+  </div>
+  <div class="action-bar" id="action-bar" style="display:none;"></div>
+</div>
+
+<script>
+const API = '';
+
+// ── State ──────────────────────────────────────────────
+let categories = [];
+let currentCat = null;
+let currentStep = 0; // 0=crop, 1=dedup, 2=hero, 3=finalize
+let detections = [];
+let dupGroups = [];
+let dupKeepers = {};     // groupIndex -> path of keeper
+let selectedHero = null;
+let heroCrop = null;
+
+const stepNames = ['Review Crops', 'Deduplicate', 'Pick Hero', 'Optimize', 'Finalize'];
+
+// ── Init ───────────────────────────────────────────────
+async function init() {
+  categories = await fetchJSON('/api/categories');
+  renderSidebar();
+}
+
+async function fetchJSON(url, opts) {
+  const res = await fetch(API + url, opts);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+
+// ── Sidebar ────────────────────────────────────────────
+function renderSidebar() {
+  const el = document.getElementById('cat-list');
+  el.innerHTML = categories.map(cat => {
+    const active = currentCat && currentCat.id === cat.id ? ' active' : '';
+    let statusCls = '';
+    if (cat.completed) statusCls = ' done';
+    else if (cat.step > 0) statusCls = ' in-progress';
+    return `<div class="cat-item${active}" data-id="${cat.id}">
+      <div class="cat-status${statusCls}"></div>
+      <span class="cat-name">${cat.label}</span>
+      <span class="count">${cat.imageCount}</span>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.cat-item').forEach(item => {
+    item.addEventListener('click', () => selectCategory(item.dataset.id));
+  });
+}
+
+async function selectCategory(catId) {
+  currentCat = categories.find(c => c.id === catId);
+  if (!currentCat) return;
+  // Always start at step 0 so crops aren't accidentally skipped.
+  // Users can click step pills to jump ahead if they want.
+  currentStep = 0;
+  renderSidebar();
+  renderSteps();
+  await loadStep(currentStep);
+}
+
+// ── Steps pills ────────────────────────────────────────
+function renderSteps() {
+  const el = document.getElementById('steps');
+  el.innerHTML = stepNames.map((name, i) => {
+    let cls = 'step-pill';
+    if (i === currentStep) cls += ' active';
+    else if (currentCat && currentCat.step > i) cls += ' done';
+    return `<span class="${cls}" data-step="${i}">${name}</span>`;
+  }).join('');
+
+  el.querySelectorAll('.step-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const step = parseInt(pill.dataset.step);
+      currentStep = step;
+      renderSteps();
+      loadStep(step);
+    });
+  });
+}
+
+// ── Load step content ──────────────────────────────────
+async function loadStep(step) {
+  const content = document.getElementById('content');
+  const actionBar = document.getElementById('action-bar');
+  const title = document.getElementById('toolbar-title');
+  title.textContent = currentCat ? `${currentCat.label} — ${stepNames[step]}` : 'Select a category';
+
+  content.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+  actionBar.style.display = 'none';
+  actionBar.innerHTML = '';
+
+  try {
+    switch (step) {
+      case 0: await loadCropStep(); break;
+      case 1: await loadDedupStep(); break;
+      case 2: await loadHeroStep(); break;
+      case 3: await loadOptimizeStep(); break;
+      case 4: await loadFinalizeStep(); break;
+    }
+  } catch (err) {
+    content.innerHTML = `<div class="empty-state"><h2>Error</h2><p>${err.message}</p></div>`;
+  }
+}
+
+// ── Step 0: Crop Review (Corner Editor) ───────────────
+let cropIdx = 0;          // current image index in detections[]
+let cropCanvas = null;
+let cropCtx = null;
+let cropImg = null;       // loaded Image element
+let cropScale = 1;        // image-to-canvas scale
+let cropOffX = 0;         // canvas offset for centering
+let cropOffY = 0;
+let dragCorner = -1;      // index of corner being dragged, -1 if none
+const HANDLE_R = 10;
+const CORNER_COLORS = ['#e57373','#ffb74d','#5b9bd5','#4caf50'];
+
+function defaultCorners(w, h) {
+  return [[0, 0], [w, 0], [w, h], [0, h]];
+}
+
+async function loadCropStep() {
+  const content = document.getElementById('content');
+  const actionBar = document.getElementById('action-bar');
+
+  detections = await fetchJSON(`/api/category/${currentCat.id}/detect`);
+
+  if (detections.length === 0) {
+    content.innerHTML = '<div class="empty-state"><h2>No images found</h2><p>This category has no images to process.</p></div>';
+    return;
+  }
+
+  // Initialize per-image state
+  detections.forEach(d => {
+    const [w, h] = d.image_size;
+    if (!d._corners) {
+      d._corners = d.found && d.corners ? d.corners.map(c => [...c]) : defaultCorners(w, h);
+    }
+    if (d._status === undefined) {
+      d._status = d.found ? 'auto' : 'pending';
+    }
+    if (d._skip === undefined) d._skip = false;
+    if (d._weed === undefined) d._weed = false;
+  });
+
+  cropIdx = 0;
+  content.classList.add('no-pad');
+
+  content.innerHTML = `
+    <div class="crop-editor">
+      <div class="crop-canvas-panel" id="crop-canvas-panel">
+        <canvas id="crop-canvas"></canvas>
+        <div class="crop-image-label" id="crop-label"></div>
+      </div>
+      <div class="filmstrip" id="filmstrip"></div>
+    </div>
+  `;
+
+  cropCanvas = document.getElementById('crop-canvas');
+  cropCtx = cropCanvas.getContext('2d');
+
+  // Mouse events for corner dragging
+  cropCanvas.addEventListener('mousedown', onCanvasMouseDown);
+  cropCanvas.addEventListener('mousemove', onCanvasMouseMove);
+  cropCanvas.addEventListener('mouseup', onCanvasMouseUp);
+  cropCanvas.addEventListener('mouseleave', onCanvasMouseUp);
+
+  // Keyboard shortcuts
+  cropKeyHandler = (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || e.key === ']') { e.preventDefault(); navigateCrop(1); }
+    else if (e.key === 'ArrowLeft' || e.key === '[') { e.preventDefault(); navigateCrop(-1); }
+    else if (e.key === 's' || e.key === 'S') { e.preventDefault(); toggleSkip(); }
+    else if (e.key === 'w' || e.key === 'W') { e.preventDefault(); toggleWeed(); }
+    else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); resetCorners(); }
+    else if (e.key === 'Enter') { e.preventDefault(); acceptAndAdvance(); }
+  };
+  document.addEventListener('keydown', cropKeyHandler);
+
+  renderFilmstrip();
+  loadCropImage(0);
+
+  actionBar.style.display = 'flex';
+  actionBar.innerHTML = `
+    <button class="btn btn-secondary" id="btn-crop-prev">Prev</button>
+    <button class="btn btn-secondary" id="btn-crop-next">Next</button>
+    <button class="btn btn-secondary" id="btn-crop-skip">Skip (S)</button>
+    <button class="btn btn-danger" id="btn-crop-weed">Weed (W)</button>
+    <button class="btn btn-secondary" id="btn-crop-reset">Reset (R)</button>
+    <span class="info-text" id="crop-info"></span>
+    <span class="spacer"></span>
+    <button class="btn btn-secondary" id="btn-accept-auto">Accept All Auto</button>
+    <button class="btn btn-primary" id="btn-apply-crops">Apply Crops</button>
+  `;
+  updateCropInfo();
+
+  document.getElementById('btn-crop-prev').addEventListener('click', () => navigateCrop(-1));
+  document.getElementById('btn-crop-next').addEventListener('click', () => navigateCrop(1));
+  document.getElementById('btn-crop-skip').addEventListener('click', toggleSkip);
+  document.getElementById('btn-crop-weed').addEventListener('click', toggleWeed);
+  document.getElementById('btn-crop-reset').addEventListener('click', resetCorners);
+  document.getElementById('btn-accept-auto').addEventListener('click', () => {
+    detections.forEach(d => {
+      if (d.confidence >= 0.8 && d.found) {
+        d._skip = false;
+        if (d._status === 'pending') d._status = 'auto';
+      }
+    });
+    renderFilmstrip();
+    updateCropInfo();
+  });
+  document.getElementById('btn-apply-crops').addEventListener('click', applyCrops);
+}
+
+let cropKeyHandler = null;
+
+// Clean up keyboard handler when leaving crop step
+const _origLoadStep = loadStep;
+loadStep = async function(step) {
+  // Remove crop keyboard handler & content padding when leaving step 0
+  if (cropKeyHandler) {
+    document.removeEventListener('keydown', cropKeyHandler);
+    cropKeyHandler = null;
+  }
+  document.getElementById('content').classList.remove('no-pad');
+  return _origLoadStep(step);
+};
+
+function renderFilmstrip() {
+  const el = document.getElementById('filmstrip');
+  if (!el) return;
+  el.innerHTML = detections.map((d, i) => {
+    const cls = i === cropIdx ? 'filmstrip-item current' : 'filmstrip-item';
+    const badge = d._weed ? 'weed' : d._skip ? 'skipped' : d._status;
+    return `<div class="${cls}" data-idx="${i}">
+      <img src="/thumb/${d.path}" loading="lazy" alt="${d.name}">
+      <span class="filmstrip-badge ${badge}">${badge}</span>
+      <div class="filmstrip-name">${d.name}</div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.filmstrip-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.dataset.idx);
+      loadCropImage(idx);
+    });
+  });
+
+  // Scroll current into view
+  const current = el.querySelector('.filmstrip-item.current');
+  if (current) current.scrollIntoView({ block: 'nearest' });
+}
+
+function loadCropImage(idx) {
+  cropIdx = idx;
+  const d = detections[idx];
+  const label = document.getElementById('crop-label');
+  if (label) {
+    const confText = d.found ? ` — auto ${(d.confidence * 100).toFixed(0)}%` : ' — no auto-detect';
+    const flag = d._weed ? ' [WEED]' : d._skip ? ' [SKIP]' : '';
+    label.textContent = `${idx + 1}/${detections.length}: ${d.name}${confText}${flag}`;
+  }
+  renderFilmstrip();
+
+  // Load full-res image
+  cropImg = new Image();
+  cropImg.onload = () => {
+    fitCanvasToImage();
+    drawCropOverlay();
+  };
+  cropImg.src = `/image/${d.path}`;
+}
+
+function fitCanvasToImage() {
+  if (!cropImg || !cropCanvas) return;
+  const panel = document.getElementById('crop-canvas-panel');
+  const maxW = panel.clientWidth - 32;
+  const maxH = panel.clientHeight - 60;
+  const iw = cropImg.naturalWidth;
+  const ih = cropImg.naturalHeight;
+
+  cropScale = Math.min(maxW / iw, maxH / ih, 1);
+  const cw = Math.round(iw * cropScale);
+  const ch = Math.round(ih * cropScale);
+
+  cropCanvas.width = cw;
+  cropCanvas.height = ch;
+  cropCanvas.style.width = cw + 'px';
+  cropCanvas.style.height = ch + 'px';
+  cropOffX = 0;
+  cropOffY = 0;
+}
+
+function drawCropOverlay() {
+  if (!cropCtx || !cropImg) return;
+  const cw = cropCanvas.width;
+  const ch = cropCanvas.height;
+  const d = detections[cropIdx];
+  const corners = d._corners;
+
+  // Draw image
+  cropCtx.clearRect(0, 0, cw, ch);
+  cropCtx.drawImage(cropImg, 0, 0, cw, ch);
+
+  if (d._weed) {
+    // Red X overlay for weeded images
+    cropCtx.fillStyle = 'rgba(100,0,0,0.5)';
+    cropCtx.fillRect(0, 0, cw, ch);
+    cropCtx.strokeStyle = '#e57373';
+    cropCtx.lineWidth = 4;
+    cropCtx.beginPath();
+    cropCtx.moveTo(cw * 0.2, ch * 0.2); cropCtx.lineTo(cw * 0.8, ch * 0.8);
+    cropCtx.moveTo(cw * 0.8, ch * 0.2); cropCtx.lineTo(cw * 0.2, ch * 0.8);
+    cropCtx.stroke();
+    cropCtx.fillStyle = '#e57373';
+    cropCtx.font = 'bold 24px sans-serif';
+    cropCtx.textAlign = 'center';
+    cropCtx.fillText('WEED — will be archived', cw / 2, ch / 2 + 40);
+    cropCtx.textAlign = 'start';
+    return;
+  }
+
+  if (d._skip) {
+    cropCtx.fillStyle = 'rgba(0,0,0,0.5)';
+    cropCtx.fillRect(0, 0, cw, ch);
+    cropCtx.fillStyle = '#e57373';
+    cropCtx.font = 'bold 24px sans-serif';
+    cropCtx.textAlign = 'center';
+    cropCtx.fillText('SKIPPED — no crop', cw / 2, ch / 2);
+    cropCtx.textAlign = 'start';
+    return;
+  }
+
+  // Draw semi-transparent overlay outside the quad
+  // First dim entire image, then clear the quad area
+  cropCtx.save();
+  cropCtx.fillStyle = 'rgba(0,0,0,0.4)';
+  cropCtx.fillRect(0, 0, cw, ch);
+
+  // Cut out the quad
+  cropCtx.globalCompositeOperation = 'destination-out';
+  cropCtx.beginPath();
+  corners.forEach((c, i) => {
+    const x = c[0] * cropScale;
+    const y = c[1] * cropScale;
+    if (i === 0) cropCtx.moveTo(x, y);
+    else cropCtx.lineTo(x, y);
+  });
+  cropCtx.closePath();
+  cropCtx.fill();
+  cropCtx.restore();
+
+  // Redraw image inside the quad (since we erased it)
+  cropCtx.save();
+  cropCtx.beginPath();
+  corners.forEach((c, i) => {
+    const x = c[0] * cropScale;
+    const y = c[1] * cropScale;
+    if (i === 0) cropCtx.moveTo(x, y);
+    else cropCtx.lineTo(x, y);
+  });
+  cropCtx.closePath();
+  cropCtx.clip();
+  cropCtx.drawImage(cropImg, 0, 0, cw, ch);
+  cropCtx.restore();
+
+  // Draw quad outline
+  cropCtx.strokeStyle = '#fff';
+  cropCtx.lineWidth = 2;
+  cropCtx.setLineDash([6, 4]);
+  cropCtx.beginPath();
+  corners.forEach((c, i) => {
+    const x = c[0] * cropScale;
+    const y = c[1] * cropScale;
+    if (i === 0) cropCtx.moveTo(x, y);
+    else cropCtx.lineTo(x, y);
+  });
+  cropCtx.closePath();
+  cropCtx.stroke();
+  cropCtx.setLineDash([]);
+
+  // Draw corner handles as crosses
+  const ARM = HANDLE_R;
+  corners.forEach((c, i) => {
+    const x = c[0] * cropScale;
+    const y = c[1] * cropScale;
+    cropCtx.strokeStyle = CORNER_COLORS[i];
+    cropCtx.lineWidth = 3;
+    cropCtx.beginPath();
+    cropCtx.moveTo(x - ARM, y); cropCtx.lineTo(x + ARM, y);
+    cropCtx.moveTo(x, y - ARM); cropCtx.lineTo(x, y + ARM);
+    cropCtx.stroke();
+    // White outline for visibility
+    cropCtx.strokeStyle = '#fff';
+    cropCtx.lineWidth = 1;
+    cropCtx.beginPath();
+    cropCtx.moveTo(x - ARM, y); cropCtx.lineTo(x + ARM, y);
+    cropCtx.moveTo(x, y - ARM); cropCtx.lineTo(x, y + ARM);
+    cropCtx.stroke();
+  });
+}
+
+function canvasToImage(cx, cy) {
+  return [cx / cropScale, cy / cropScale];
+}
+
+function getCanvasPos(e) {
+  const rect = cropCanvas.getBoundingClientRect();
+  return [e.clientX - rect.left, e.clientY - rect.top];
+}
+
+function onCanvasMouseDown(e) {
+  const [cx, cy] = getCanvasPos(e);
+  const d = detections[cropIdx];
+  if (d._skip) return;
+
+  // Check if near a corner handle
+  for (let i = 0; i < 4; i++) {
+    const hx = d._corners[i][0] * cropScale;
+    const hy = d._corners[i][1] * cropScale;
+    const dist = Math.hypot(cx - hx, cy - hy);
+    if (dist < HANDLE_R + 6) {
+      dragCorner = i;
+      return;
+    }
+  }
+}
+
+function onCanvasMouseMove(e) {
+  if (dragCorner < 0) return;
+  const [cx, cy] = getCanvasPos(e);
+  const [ix, iy] = canvasToImage(cx, cy);
+  const d = detections[cropIdx];
+  const [w, h] = d.image_size;
+
+  // Clamp to image bounds
+  d._corners[dragCorner] = [
+    Math.max(0, Math.min(ix, w)),
+    Math.max(0, Math.min(iy, h)),
+  ];
+  d._status = 'manual';
+  drawCropOverlay();
+}
+
+function onCanvasMouseUp() {
+  if (dragCorner >= 0) {
+    dragCorner = -1;
+    renderFilmstrip();
+    updateCropInfo();
+  }
+}
+
+function navigateCrop(dir) {
+  const next = cropIdx + dir;
+  if (next >= 0 && next < detections.length) {
+    loadCropImage(next);
+  }
+}
+
+function toggleSkip() {
+  const d = detections[cropIdx];
+  d._skip = !d._skip;
+  d._weed = false;
+  if (d._skip) d._status = 'skipped';
+  else if (d.found) d._status = 'auto';
+  else d._status = 'pending';
+  drawCropOverlay();
+  renderFilmstrip();
+  updateCropInfo();
+}
+
+function toggleWeed() {
+  const d = detections[cropIdx];
+  d._weed = !d._weed;
+  d._skip = false;
+  if (d._weed) d._status = 'weed';
+  else if (d.found) d._status = 'auto';
+  else d._status = 'pending';
+  drawCropOverlay();
+  renderFilmstrip();
+  updateCropInfo();
+}
+
+function resetCorners() {
+  const d = detections[cropIdx];
+  const [w, h] = d.image_size;
+  d._corners = d.found && d.corners ? d.corners.map(c => [...c]) : defaultCorners(w, h);
+  d._status = d.found ? 'auto' : 'pending';
+  d._skip = false;
+  d._weed = false;
+  drawCropOverlay();
+  renderFilmstrip();
+  updateCropInfo();
+}
+
+function acceptAndAdvance() {
+  const d = detections[cropIdx];
+  if (d._status === 'pending') d._status = 'manual';
+  d._skip = false;
+  renderFilmstrip();
+  updateCropInfo();
+  navigateCrop(1);
+}
+
+function updateCropInfo() {
+  const el = document.getElementById('crop-info');
+  if (!el) return;
+  const weeds = detections.filter(d => d._weed).length;
+  const skipped = detections.filter(d => d._skip).length;
+  const toCrop = detections.filter(d => !d._skip && !d._weed).length;
+  const manual = detections.filter(d => d._status === 'manual' && !d._weed).length;
+  const auto = detections.filter(d => d._status === 'auto' && !d._skip && !d._weed).length;
+  el.textContent = `${cropIdx + 1}/${detections.length} | ${toCrop} crop (${auto} auto, ${manual} manual), ${skipped} skip, ${weeds} weed`;
+}
+
+async function applyCrops() {
+  const btn = document.getElementById('btn-apply-crops');
+  btn.disabled = true;
+  btn.textContent = 'Applying...';
+
+  const crops = detections.map(d => ({
+    path: d.path,
+    skip: d._skip || d._weed,
+    weed: d._weed,
+    corners: (d._skip || d._weed) ? null : d._corners,
+  }));
+
+  try {
+    const result = await fetchJSON(`/api/category/${currentCat.id}/crop`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({crops}),
+    });
+    const parts = [`${result.applied} cropped`, `${result.skipped} skipped`];
+    if (result.weeded) parts.push(`${result.weeded} weeded`);
+    alert(`Done: ${parts.join(', ')}. Originals in _originals/, weeds in _weeds/.`);
+    currentCat.step = Math.max(currentCat.step || 0, 1);
+    currentStep = 1;
+    renderSteps();
+    await loadStep(1);
+  } catch (err) {
+    alert('Error applying crops: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Apply Crops';
+  }
+}
+
+// ── Step 1: Deduplicate ────────────────────────────────
+async function loadDedupStep() {
+  const content = document.getElementById('content');
+  const actionBar = document.getElementById('action-bar');
+
+  dupGroups = await fetchJSON(`/api/category/${currentCat.id}/duplicates`);
+  dupKeepers = {};
+
+  // Auto-select first in each group as keeper
+  dupGroups.forEach((group, gi) => {
+    if (group.length > 0) dupKeepers[gi] = group[0].path;
+  });
+
+  const multiGroups = dupGroups.filter(g => g.length > 1);
+
+  if (multiGroups.length === 0) {
+    content.innerHTML = `<div class="empty-state">
+      <h2>No duplicates found</h2>
+      <p>All ${dupGroups.length} images appear unique. Proceed to hero selection.</p>
+    </div>`;
+    actionBar.style.display = 'flex';
+    actionBar.innerHTML = `
+      <span class="spacer"></span>
+      <button class="btn btn-primary" id="btn-skip-dedup">Skip to Hero Selection</button>
+    `;
+    document.getElementById('btn-skip-dedup').addEventListener('click', async () => {
+      currentCat.step = Math.max(currentCat.step || 0, 2);
+      currentStep = 2;
+      renderSteps();
+      await loadStep(2);
+    });
+    return;
+  }
+
+  renderDupGroups();
+
+  actionBar.style.display = 'flex';
+  actionBar.innerHTML = `
+    <span class="info-text" id="dedup-info"></span>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" id="btn-apply-dedup">Remove Duplicates</button>
+  `;
+  updateDedupInfo();
+
+  document.getElementById('btn-apply-dedup').addEventListener('click', applyDedup);
+}
+
+function renderDupGroups() {
+  const content = document.getElementById('content');
+  const multiGroups = dupGroups.map((g, i) => [g, i]).filter(([g]) => g.length > 1);
+  const soloCount = dupGroups.filter(g => g.length === 1).length;
+
+  content.innerHTML = `
+    <p style="margin-bottom:16px; color:var(--text-dim); font-size:13px;">
+      ${multiGroups.length} group${multiGroups.length !== 1 ? 's' : ''} of similar images found.
+      ${soloCount} unique images. Click an image to select it as the keeper (green).
+    </p>
+    ${multiGroups.map(([group, gi]) => `
+      <div class="dup-group">
+        <h3>Group ${gi + 1} — ${group.length} images</h3>
+        <div class="dup-row">
+          ${group.map(img => {
+            const isKeeper = dupKeepers[gi] === img.path;
+            return `<div class="dup-item${isKeeper ? ' keeper' : ''}" data-gi="${gi}" data-path="${img.path}">
+              <img src="/thumb/${img.path}" loading="lazy" alt="${img.name}">
+              <div class="label">${isKeeper ? 'KEEP' : img.name}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `;
+
+  content.querySelectorAll('.dup-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const gi = parseInt(item.dataset.gi);
+      dupKeepers[gi] = item.dataset.path;
+      renderDupGroups();
+      updateDedupInfo();
+    });
+  });
+}
+
+function updateDedupInfo() {
+  const el = document.getElementById('dedup-info');
+  if (!el) return;
+  let toRemove = 0;
+  dupGroups.forEach((group, gi) => {
+    if (group.length > 1) {
+      toRemove += group.filter(img => img.path !== dupKeepers[gi]).length;
+    }
+  });
+  el.textContent = `${toRemove} duplicates will be archived`;
+}
+
+async function applyDedup() {
+  const btn = document.getElementById('btn-apply-dedup');
+  btn.disabled = true;
+  btn.textContent = 'Removing...';
+
+  const groups = [];
+  dupGroups.forEach((group, gi) => {
+    if (group.length <= 1) return;
+    const keepPath = dupKeepers[gi];
+    const removePaths = group.filter(img => img.path !== keepPath).map(img => img.path);
+    if (removePaths.length > 0) {
+      groups.push({keep: keepPath, remove: removePaths});
+    }
+  });
+
+  try {
+    const result = await fetchJSON(`/api/category/${currentCat.id}/deduplicate`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({groups}),
+    });
+    alert(`Deduplication complete: ${result.removed} duplicates archived.`);
+    currentCat.step = Math.max(currentCat.step || 0, 2);
+    currentStep = 2;
+    renderSteps();
+    await loadStep(2);
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Remove Duplicates';
+  }
+}
+
+// ── Step 2: Pick Hero ──────────────────────────────────
+async function loadHeroStep() {
+  const content = document.getElementById('content');
+  const actionBar = document.getElementById('action-bar');
+
+  const images = await fetchJSON(`/api/category/${currentCat.id}/images`);
+  selectedHero = null;
+
+  if (images.length === 0) {
+    content.innerHTML = '<div class="empty-state"><h2>No images</h2><p>No images remaining in this category.</p></div>';
+    return;
+  }
+
+  content.innerHTML = `
+    <p style="margin-bottom:16px; color:var(--text-dim); font-size:13px;">
+      Click an image to select it as the hero/featured image for this category.
+    </p>
+    <div class="image-grid">${images.map(img => `
+      <div class="image-card" data-path="${img.path}">
+        <img src="/thumb/${img.path}" loading="lazy" alt="${img.name}">
+        <div class="info">
+          <span class="name">${img.name}</span>
+        </div>
+      </div>
+    `).join('')}</div>
+  `;
+
+  content.querySelectorAll('.image-card').forEach(card => {
+    card.addEventListener('click', () => {
+      content.querySelectorAll('.image-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedHero = card.dataset.path;
+      const setBtn = document.getElementById('btn-set-hero');
+      if (setBtn) setBtn.disabled = false;
+    });
+  });
+
+  actionBar.style.display = 'flex';
+  actionBar.innerHTML = `
+    <span class="info-text">${images.length} images available</span>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" id="btn-set-hero" disabled>Set as Hero</button>
+  `;
+
+  document.getElementById('btn-set-hero').addEventListener('click', applyHero);
+}
+
+async function applyHero() {
+  if (!selectedHero) return;
+  const btn = document.getElementById('btn-set-hero');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    const result = await fetchJSON(`/api/category/${currentCat.id}/hero`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path: selectedHero, crop_rect: heroCrop}),
+    });
+    alert(`Hero image set: ${result.hero}`);
+    currentCat.step = Math.max(currentCat.step || 0, 3);
+    currentStep = 3;
+    renderSteps();
+    await loadStep(3);
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Set as Hero';
+  }
+}
+
+// ── Step 3: Optimize ───────────────────────────────────
+async function loadOptimizeStep() {
+  const content = document.getElementById('content');
+  const actionBar = document.getElementById('action-bar');
+
+  const images = await fetchJSON(`/api/category/${currentCat.id}/images`);
+
+  content.innerHTML = `
+    <div class="summary-card">
+      <h3>Optimize: ${currentCat.label}</h3>
+      <p style="margin-bottom:12px; font-size:14px;">
+        This will process <strong>${images.length}</strong> images:
+      </p>
+      <div class="summary-row"><span>Resize</span><span>max 1920px</span></div>
+      <div class="summary-row"><span>Format</span><span>WebP, quality 82</span></div>
+      <div class="summary-row"><span>Watermark</span><span>&copy; Sarah Harlow</span></div>
+      <div class="summary-row"><span>Metadata</span><span>Stripped</span></div>
+      <p style="margin-top:16px; font-size:13px; color:var(--text-dim);">
+        Non-webp originals will be replaced with optimized .webp versions.
+        Pre-crop originals are safe in <code>_originals/</code>.
+      </p>
+    </div>
+  `;
+
+  actionBar.style.display = 'flex';
+  actionBar.innerHTML = `
+    <span class="info-text">${images.length} images to optimize</span>
+    <span class="spacer"></span>
+    <button class="btn btn-secondary" id="btn-skip-optimize">Skip</button>
+    <button class="btn btn-primary" id="btn-run-optimize">Optimize All</button>
+  `;
+
+  document.getElementById('btn-skip-optimize').addEventListener('click', async () => {
+    currentCat.step = Math.max(currentCat.step || 0, 4);
+    currentStep = 4;
+    renderSteps();
+    await loadStep(4);
+  });
+
+  document.getElementById('btn-run-optimize').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-run-optimize');
+    btn.disabled = true;
+    btn.textContent = 'Optimizing...';
+
+    try {
+      const result = await fetchJSON(`/api/category/${currentCat.id}/optimize`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({}),
+      });
+      let msg = `Optimized ${result.optimized} images.`;
+      if (result.errors && result.errors.length) {
+        msg += `\n\nErrors:\n${result.errors.join('\n')}`;
+      }
+      alert(msg);
+      currentCat.step = Math.max(currentCat.step || 0, 4);
+      currentStep = 4;
+      renderSteps();
+      await loadStep(4);
+    } catch (err) {
+      alert('Error: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Optimize All';
+    }
+  });
+}
+
+// ── Step 4: Finalize ───────────────────────────────────
+async function loadFinalizeStep() {
+  const content = document.getElementById('content');
+  const actionBar = document.getElementById('action-bar');
+
+  const images = await fetchJSON(`/api/category/${currentCat.id}/images`);
+  const works = categories.find(c => c.id === currentCat.id);
+
+  content.innerHTML = `
+    <div class="summary-card">
+      <h3>Finalize: ${currentCat.label}</h3>
+      <div class="summary-row">
+        <span>Category</span>
+        <span>${currentCat.label}</span>
+      </div>
+      <div class="summary-row">
+        <span>Original image count</span>
+        <span>${currentCat.imageCount}</span>
+      </div>
+      <div class="summary-row">
+        <span>Current image count</span>
+        <span>${images.length}</span>
+      </div>
+      <div class="summary-row">
+        <span>Images removed</span>
+        <span>${currentCat.imageCount - images.length}</span>
+      </div>
+      <p style="margin-top:16px; font-size:13px; color:var(--text-dim);">
+        This will update <code>works.json</code> with the current image list and hero image.
+        Originals are preserved in <code>_originals/</code> and duplicates in <code>_duplicates_of_*/</code> subfolders.
+      </p>
+    </div>
+  `;
+
+  actionBar.style.display = 'flex';
+  actionBar.innerHTML = `
+    <span class="spacer"></span>
+    <button class="btn btn-success" id="btn-finalize">Save to works.json</button>
+  `;
+
+  document.getElementById('btn-finalize').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-finalize');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const result = await fetchJSON(`/api/category/${currentCat.id}/finalize`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({}),
+      });
+      alert(`Finalized! ${result.images_before} → ${result.images_after} images. Featured: ${result.featured}`);
+      currentCat.step = 5;
+      currentCat.completed = true;
+
+      // Refresh categories
+      categories = await fetchJSON('/api/categories');
+      currentCat = categories.find(c => c.id === currentCat.id);
+      renderSidebar();
+      renderSteps();
+
+      content.innerHTML = `
+        <div class="empty-state">
+          <h2>Category Complete</h2>
+          <p>${currentCat.label} has been finalized. Select another category to continue.</p>
+        </div>
+      `;
+      actionBar.style.display = 'none';
+    } catch (err) {
+      alert('Error: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Save to works.json';
+    }
+  });
+}
+
+// ── Boot ───────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
