@@ -570,6 +570,11 @@ a.contact-line:hover{
   user-select: none;
   -webkit-touch-callout: none;
 }
+.lightbox-stage{ cursor: zoom-in; }
+.lightbox--zoomed .lightbox-stage{ cursor: grab; }
+.lightbox--zoomed.lightbox--panning .lightbox-stage{ cursor: grabbing; }
+.lightbox--zoomed .lightbox-prev,
+.lightbox--zoomed .lightbox-next{ opacity: 0.2; pointer-events: none; }
 .lightbox-img--b{
   position: absolute;
   top: 50%;
