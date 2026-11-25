@@ -478,11 +478,13 @@ function zoomToPoint(newScale, cx, cy) {
   const imgCy = rect.top + rect.height / 2;
 
   // Keep the point under the cursor stationary
+  // With transform-origin: center (default), the correct formula omits
+  // the ratio multiplier on the existing offset — unlike origin 0 0.
   const ratio = newScale / zoomScale;
   const offX = cx - imgCx;
   const offY = cy - imgCy;
-  zoomX = zoomX * ratio - offX * (ratio - 1);
-  zoomY = zoomY * ratio - offY * (ratio - 1);
+  zoomX = zoomX - offX * (ratio - 1);
+  zoomY = zoomY - offY * (ratio - 1);
 
   zoomScale = newScale;
   applyZoomTransform();
